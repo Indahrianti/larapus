@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use App\Models\Author;
 use Illuminate\Http\Request;
 
 class BookController extends Controller
@@ -14,7 +15,8 @@ class BookController extends Controller
      */
     public function index()
     {
-        //
+        $book = Book::all();
+        return view('book.index', compact('book'));
     }
 
     /**
@@ -24,7 +26,8 @@ class BookController extends Controller
      */
     public function create()
     {
-        //
+        $author = Author::all();
+         return view('book.create', compact('author'));
     }
 
     /**
@@ -35,7 +38,19 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $book = new Book;
+        $book->title = $request->title;
+        $book->author_id = $request->author_id;
+        // upload image / foto
+        if ($request->hasFile('cover')) {
+            $image = $request->file('cover');
+            $name = rand(1000, 9999) . $image->getClientOriginalName();
+            $image->move('image/book/', $name);
+            $book->cover = $name;
+        }
+        $book->amount = $request->amount;
+        $book->save();
+        return redirect()->route('book.index');
     }
 
     /**
@@ -55,9 +70,11 @@ class BookController extends Controller
      * @param  \App\Models\Book  $book
      * @return \Illuminate\Http\Response
      */
-    public function edit(Book $book)
+    public function edit($id)
     {
-        //
+         $book = Book::findOrFail($id);
+         $author = Author::all();
+        return view('book.edit', compact('book','author'));
     }
 
     /**
@@ -67,9 +84,23 @@ class BookController extends Controller
      * @param  \App\Models\Book  $book
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Book $book)
+    public function update(Request $request, $id)
     {
-        //
+        $book = Book::findOrFail($id);
+        $book->title = $request->title;
+        $book->author_id = $request->author_id;
+        // upload image / foto
+        if ($request->hasFile('cover')) {
+            $book->deleteImage();
+            $image = $request->file('cover');
+            $name = rand(1000, 9999) . $image->getClientOriginalName();
+            $image->move('image/book/', $name);
+            $book->cover = $name;
+        }
+        $book->amount = $request->amount;
+        $book->save();
+
+        return redirect()->route('book.index');
     }
 
     /**
@@ -78,8 +109,11 @@ class BookController extends Controller
      * @param  \App\Models\Book  $book
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Book $book)
+    public function destroy($id)
     {
-        //
+        $book = Book::findOrFail($id);
+        $book->deleteImage();
+        $book->delete();
+        return redirect()->route('book.index');
     }
 }
